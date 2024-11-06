@@ -3,7 +3,6 @@ import {
   exists,
   readTextFile,
   writeTextFile,
-  readFile,
 } from "@tauri-apps/plugin-fs";
 
 import { emptyData, StorageData } from "../struct/data";
