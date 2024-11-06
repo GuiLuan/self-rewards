@@ -9,6 +9,8 @@ import {
   notification,
   Image,
   Drawer,
+  Typography,
+  Divider,
 } from "antd";
 import { useContext, useState } from "react";
 import { IoMdTimer } from "react-icons/io";
@@ -24,10 +26,11 @@ import { FaRegEdit } from "react-icons/fa";
 import { BaseInstance, BaseTemplate } from "../struct";
 import { InstanceOp, TemplateOp } from "../utils";
 import { UpdateDataContext } from "../context";
-import { FormModal } from "./modal";
+import { InstanceModal, TemplateModal } from "./modal";
 
 function TemplateCard({ template }: { template: BaseTemplate }) {
   const [open, setOpen] = useState(false);
+  const [open1, setOpen1] = useState(false);
 
   const { data, updateData } = useContext(UpdateDataContext);
 
@@ -45,7 +48,14 @@ function TemplateCard({ template }: { template: BaseTemplate }) {
       extra={
         <Space>
           <Tooltip title={template.pointsExplan} placement="bottomLeft">
-            <Space size={1} className="cursor-help text-green-700">
+            <Space
+              size={1}
+              className={
+                template.type === "quest"
+                  ? "cursor-help text-orange-600"
+                  : "cursor-help text-green-700"
+              }
+            >
               <PiCurrencyDollarSimpleDuotone />
               <p>{template.points}</p>
             </Space>
@@ -94,7 +104,7 @@ function TemplateCard({ template }: { template: BaseTemplate }) {
           >
             <GrMore className="text-gray-500" />
           </Dropdown>
-          <FormModal
+          <TemplateModal
             modalTitle="修改模板"
             open={open}
             setOpen={setOpen}
@@ -133,7 +143,13 @@ function TemplateCard({ template }: { template: BaseTemplate }) {
               }
             >
               <IoInfiniteOutline />
-              <p>
+              <p
+                className={
+                  template.usedCount >= template.repeatCount / 2
+                    ? "text-yellow-600"
+                    : ""
+                }
+              >
                 次数 : {template.usedCount} / {template.repeatCount}
               </p>
             </Space>
@@ -149,36 +165,66 @@ function TemplateCard({ template }: { template: BaseTemplate }) {
               },
             }}
           >
-            <Popconfirm
-              okText="确定"
-              cancelText="取消"
-              title="确定要执行此操作？"
-              onConfirm={() => {
-                if (
-                  template.type === "reward" &&
-                  data.points < template.points
-                ) {
-                  notification.error({
-                    message: "点数不足",
-                    description: `当前点数：${data.points}，所需点数：${template.points}`,
-                  });
-                  return;
-                }
+            <InstanceModal
+              open={open1}
+              setOpen={setOpen1}
+              maxPoints={template.points}
+              onSubmit={(v) => {
                 updateData({
                   ...data,
                   templates: TemplateOp.update(data.templates, template.id, {
                     usedCount: template.usedCount + 1,
                   }),
-                  instances: InstanceOp.add(data.instances, template),
-                  points:
-                    template.type === "quest"
-                      ? data.points + template.points
-                      : data.points - template.points,
+                  instances: InstanceOp.add(
+                    data.instances,
+                    template,
+                    v.points,
+                    v.pointsExplan,
+                  ),
+                  points: data.points + v.points,
                 });
                 notification.success({
-                  message: `${template.type === "quest" ? "🏆 达成：" : "✨ 兑换："}${template.name}`,
-                  description: `${template.type === "quest" ? "获得" : "消耗"} ${template.points} 点数`,
+                  message: `🏆 达成：${template.name}`,
+                  description: `获得 ${v.points} 点数`,
                 });
+              }}
+            />
+            <Popconfirm
+              okText="确定"
+              cancelText="取消"
+              title="确定要执行此操作？"
+              onConfirm={() => {
+                switch (template.type) {
+                  case "reward":
+                    if (data.points < template.points) {
+                      notification.error({
+                        message: "点数不足",
+                        description: `当前点数：${data.points}，所需点数：${template.points}`,
+                      });
+                      return;
+                    } else {
+                      updateData({
+                        ...data,
+                        templates: TemplateOp.update(
+                          data.templates,
+                          template.id,
+                          {
+                            usedCount: template.usedCount + 1,
+                          },
+                        ),
+                        instances: InstanceOp.add(data.instances, template),
+                        points: data.points - template.points,
+                      });
+                    }
+                    notification.success({
+                      message: `✨ 兑换：${template.name}`,
+                      description: `消耗 ${template.points} 点数`,
+                    });
+                    return;
+                  case "quest":
+                    setOpen1(true);
+                    return;
+                }
               }}
             >
               <Button
@@ -211,6 +257,7 @@ function HistoryInstanceCard({ instance }: { instance: BaseInstance }) {
     templatePointsExplan,
     createTime,
   } = instance;
+  const [open, setOpen] = useState(false);
   return (
     <Card
       title={
@@ -226,9 +273,18 @@ function HistoryInstanceCard({ instance }: { instance: BaseInstance }) {
       }
       extra={
         <Tooltip title={templatePointsExplan} placement="bottomLeft">
-          <Space size={1} className="cursor-help text-green-700">
+          <Space
+            size={1}
+            className={
+              instance.type === "quest"
+                ? "cursor-help text-orange-600"
+                : "cursor-help text-green-700"
+            }
+          >
             <PiCurrencyDollarSimpleDuotone />
-            <p>{templatePoints}</p>
+            <p>
+              {instance.points === undefined ? templatePoints : instance.points}
+            </p>
           </Space>
         </Tooltip>
       }
@@ -237,11 +293,46 @@ function HistoryInstanceCard({ instance }: { instance: BaseInstance }) {
       {
         <>
           <div className="flex flex-col gap-1 text-gray-500">
+            <Drawer
+              open={open}
+              onClose={() => setOpen(false)}
+              title={(instance.type === "quest" ? "🏆 " : "✨ ") + templateName}
+            >
+              <Typography>
+                <Typography.Title level={5}>
+                  {instance.type === "quest" ? "成就描述" : "奖励描述"}
+                </Typography.Title>
+                <Typography.Paragraph>{templateDesc}</Typography.Paragraph>
+                <Divider />
+                {instance.pointsExplan !== undefined &&
+                instance.pointsExplan !== undefined ? (
+                  <>
+                    <Typography.Title level={5}>自评点数</Typography.Title>
+                    <Typography.Paragraph>
+                      {instance.points}
+                    </Typography.Paragraph>
+                    <Divider />
+                    <Typography.Title level={5}>点数解释</Typography.Title>
+                    <Typography.Paragraph>
+                      {instance.pointsExplan}
+                    </Typography.Paragraph>
+                    <Divider />
+                  </>
+                ) : null}
+              </Typography>
+            </Drawer>
             <Space>
               <BiDetail />
-              <Tooltip title={templateDesc} placement="bottomLeft">
-                <p className="underline underline-offset-1">详情</p>
-              </Tooltip>
+              <p
+                className={
+                  instance.type === "quest"
+                    ? "text-[#f8861b] underline underline-offset-1 hover:cursor-pointer"
+                    : "text-[#22c55e] underline underline-offset-1 hover:cursor-pointer"
+                }
+                onClick={() => setOpen(true)}
+              >
+                详情
+              </p>
             </Space>
             <Space className="text-gray-400">
               <IoMdTimer />
@@ -271,42 +362,53 @@ function TodayInstanceCard({ instance }: { instance: BaseInstance }) {
         {instance.templateDesc}
       </Drawer>
       <div className="absolute left-0 top-0 z-50 ml-3 mt-3 flex h-44 w-64 items-center justify-center rounded-lg bg-[#0000006c]">
-        <Button className="mr-3" type="primary" onClick={() => setOpen(true)}>
-          详情
-        </Button>
-        <Button
-          type="primary"
-          danger
-          onClick={() => {
-            let templates;
-            const template = TemplateOp.query(
-              data.templates,
-              instance.templateId,
-            );
-            if (template === undefined) templates = data.templates;
-            else
-              templates = TemplateOp.update(data.templates, template.id, {
-                usedCount: template.usedCount - 1,
-              });
-            updateData({
-              ...data,
-              templates: templates,
-              instances: InstanceOp.del(data.instances, instance.instanceId),
-              points:
-                instance.type === "quest"
-                  ? data.points - instance.templatePoints
-                  : data.points + instance.templatePoints,
-            });
-            notification.warning({
-              message:
-                (instance.type === "quest" ? "🏆 取消：" : "✨ 退还：") +
-                instance.templateName,
-              description: `点数 ${instance.templatePoints} 已${instance.type === "quest" ? "扣除" : "返还"}`,
-            });
+        <ConfigProvider
+          theme={{
+            components: {
+              Button: {
+                colorPrimary: instance.type === "quest" ? "#f8861b" : "#22c55e",
+                algorithm: true,
+              },
+            },
           }}
         >
-          取消
-        </Button>
+          <Button className="mr-3" type="primary" onClick={() => setOpen(true)}>
+            详情
+          </Button>
+          <Button
+            type="primary"
+            danger
+            onClick={() => {
+              let templates;
+              const template = TemplateOp.query(
+                data.templates,
+                instance.templateId,
+              );
+              if (template === undefined) templates = data.templates;
+              else
+                templates = TemplateOp.update(data.templates, template.id, {
+                  usedCount: template.usedCount - 1,
+                });
+              updateData({
+                ...data,
+                templates: templates,
+                instances: InstanceOp.del(data.instances, instance.instanceId),
+                points:
+                  instance.type === "quest" && instance.points !== undefined
+                    ? data.points - instance.points
+                    : data.points + instance.templatePoints,
+              });
+              notification.warning({
+                message:
+                  (instance.type === "quest" ? "🏆 取消：" : "✨ 退还：") +
+                  instance.templateName,
+                description: `点数 ${instance.type === "quest" && instance.points !== undefined ? instance.points : instance.templatePoints} 已${instance.type === "quest" ? "扣除" : "返还"}`,
+              });
+            }}
+          >
+            取消
+          </Button>
+        </ConfigProvider>
       </div>
     </div>
   );

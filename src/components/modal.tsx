@@ -13,7 +13,7 @@ import { BaseTemplate } from "../struct";
 import { fileToBase64 } from "../utils";
 import { useState } from "react";
 
-function FormModal({
+function TemplateModal({
   modalTitle,
   open,
   setOpen,
@@ -148,4 +148,79 @@ function FormModal({
   );
 }
 
-export { FormModal };
+function InstanceModal({
+  open,
+  setOpen,
+  onSubmit,
+  maxPoints,
+}: {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  onSubmit: (values: { points: number; pointsExplan: string }) => void;
+  maxPoints: number;
+}) {
+  const [form] = Form.useForm();
+
+  return (
+    <Modal
+      open={open}
+      title={"自我评估"}
+      okText="确认"
+      cancelText="取消"
+      okButtonProps={{
+        autoFocus: true,
+        htmlType: "submit",
+      }}
+      onCancel={() => setOpen(false)}
+      modalRender={(dom) => (
+        <Form
+          labelCol={{ span: 4 }}
+          wrapperCol={{ span: 14 }}
+          layout="horizontal"
+          form={form}
+          name="form_in_modal"
+          clearOnDestroy
+          variant="filled"
+          onFinish={(v) => {
+            onSubmit(v);
+            setOpen(false);
+            form.resetFields();
+          }}
+        >
+          {dom}
+        </Form>
+      )}
+    >
+      <Form.Item
+        name={"points"}
+        label="点数"
+        required
+        rules={[
+          { required: true, message: "点数不能为空" },
+          {
+            type: "number",
+            max: maxPoints,
+            message: `点数不能超过${maxPoints}`,
+          },
+          {
+            type: "number",
+            min: 0,
+            message: "点数不能小于0",
+          },
+        ]}
+      >
+        <InputNumber max={maxPoints} min={0} />
+      </Form.Item>
+      <Form.Item
+        name={"pointsExplan"}
+        label="记录"
+        required
+        rules={[{ required: true, message: "记录不能为空" }]}
+      >
+        <Input.TextArea autoSize={{ minRows: 2, maxRows: 4 }} />
+      </Form.Item>
+    </Modal>
+  );
+}
+
+export { TemplateModal, InstanceModal };

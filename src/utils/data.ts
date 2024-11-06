@@ -130,7 +130,11 @@ class TemplateOp {
 
 class InstanceOp {
   /* 根据模板生成实例 */
-  static generate(template: BaseTemplate) {
+  static generate(
+    template: BaseTemplate,
+    points?: number,
+    pointsExplan?: string,
+  ) {
     return {
       type: template.type,
       instanceId: genenrateId(),
@@ -141,12 +145,19 @@ class InstanceOp {
       templatePointsExplan: template.pointsExplan,
       templateRepeatCount: template.repeatCount,
       createTime: getCurTime(),
+      points,
+      pointsExplan,
     } as BaseInstance;
   }
 
   /* 添加实例 */
-  static add(instances: BaseInstance[], template: BaseTemplate) {
-    const newInstance = this.generate(template);
+  static add(
+    instances: BaseInstance[],
+    template: BaseTemplate,
+    points?: number,
+    pointsExplan?: string,
+  ) {
+    const newInstance = this.generate(template, points, pointsExplan);
     return [...instances, newInstance];
   }
 

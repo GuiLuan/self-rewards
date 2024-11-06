@@ -14,6 +14,8 @@ interface BaseInstance {
   templatePointsExplan: string;
   templateRepeatCount: number;
   createTime: string;
+  points?: number;
+  pointsExplan?: string;
 }
 
 interface QuestInstance extends BaseInstance {

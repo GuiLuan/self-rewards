@@ -8,7 +8,7 @@ import { StorageData } from "../struct/data";
 import { TemplateOp } from "../utils/data";
 import { isToday } from "../utils/common";
 import { UpdateDataContext } from "../context";
-import { FormModal } from "./modal";
+import { TemplateModal } from "./modal";
 
 function TodayPage({ data }: { data: StorageData }) {
   // 筛选出今天创建的instance
@@ -111,7 +111,7 @@ function ShowPage({
         />
       </FloatButton.Group>
 
-      <FormModal
+      <TemplateModal
         modalTitle="新增模板"
         open={open}
         setOpen={setOpen}
