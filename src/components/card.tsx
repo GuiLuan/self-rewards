@@ -34,13 +34,21 @@ function TemplateCard({ template }: { template: BaseTemplate }) {
 
   const { data, updateData } = useContext(UpdateDataContext);
 
+  let textColor;
+
+  if (template.usedCount >= template.repeatCount) {
+    textColor = "text-red-500";
+  } else if (template.usedCount >= template.repeatCount / 2) {
+    textColor = "text-yellow-600";
+  }
+
   return (
     <Card
       title={
         <Tooltip title={template.name} placement="bottomLeft">
           <p>
-            {template.name.length >= 18
-              ? template.name.slice(0, 18) + "..."
+            {template.name.length >= 9
+              ? template.name.slice(0, 9) + "..."
               : template.name}
           </p>
         </Tooltip>
@@ -137,19 +145,9 @@ function TemplateCard({ template }: { template: BaseTemplate }) {
                 <p className="underline underline-offset-1">详情</p>
               </Tooltip>
             </Space>
-            <Space
-              className={
-                template.usedCount >= template.repeatCount ? "text-red-500" : ""
-              }
-            >
+            <Space className={textColor}>
               <IoInfiniteOutline />
-              <p
-                className={
-                  template.usedCount >= template.repeatCount / 2
-                    ? "text-yellow-600"
-                    : ""
-                }
-              >
+              <p className={textColor}>
                 次数 : {template.usedCount} / {template.repeatCount}
               </p>
             </Space>
@@ -263,9 +261,9 @@ function HistoryInstanceCard({ instance }: { instance: BaseInstance }) {
       title={
         <Tooltip title={templateName} placement="bottomLeft">
           <p>
-            {templateName.length >= 18
+            {templateName.length >= 9
               ? `${instance.type === "quest" ? "🏆 " : "✨ "}` +
-                templateName.slice(0, 18) +
+                templateName.slice(0, 9) +
                 "..."
               : `${instance.type === "quest" ? "🏆 " : "✨ "}` + templateName}
           </p>
