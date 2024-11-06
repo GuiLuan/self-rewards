@@ -5,41 +5,16 @@ import {
   writeTextFile,
 } from "@tauri-apps/plugin-fs";
 
-import { StorageData } from "../struct/data";
+import { emptyData, StorageData } from "../struct/data";
 import { BaseTemplate } from "../struct/template";
 import { genenrateId, getCurTime } from "./common";
 import { BaseInstance } from "../struct/instance";
 
+/* 开发环境存放在桌面，生产环境存放在安装之后APP文件夹 */
 const DATA_DIR = import.meta.env.DEV
   ? BaseDirectory.Desktop
   : BaseDirectory.AppData;
 const DATA_FILE = "data.json";
-
-/**
- * 读取所有数据
- * @returns 如果没有读取到数据，返回{}；反之，返回所有数据
- */
-const readData = async () => {
-  const flag = await exists(DATA_FILE, {
-    baseDir: DATA_DIR,
-  });
-  if (flag === true) {
-    const data = await readTextFile(DATA_FILE, {
-      baseDir: DATA_DIR,
-    });
-    return JSON.parse(data) as StorageData;
-  } else {
-    const emptyData: StorageData = {
-      templates: [],
-      instances: [],
-      points: 0,
-    };
-    await writeTextFile(DATA_FILE, JSON.stringify(emptyData), {
-      baseDir: DATA_DIR,
-    });
-    return emptyData;
-  }
-};
 
 /**
  * 覆盖性写入
@@ -51,133 +26,120 @@ const writeData = async (data: StorageData) => {
   });
 };
 
+/**
+ * 读取所有数据
+ * @returns 如果没有读取到数据，返回 EmptyData
+ */
+const readData = async () => {
+  const flag = await exists(DATA_FILE, {
+    baseDir: DATA_DIR,
+  });
+  switch (flag) {
+    // 有文件，读取并返回
+    case true:
+      return JSON.parse(
+        await readTextFile(DATA_FILE, {
+          baseDir: DATA_DIR,
+        }),
+      ) as StorageData;
+    // 没有文件，创建文件，写入 EmptyData，并返回 EmptyData
+    case false:
+      await writeTextFile(DATA_FILE, JSON.stringify(emptyData), {
+        baseDir: DATA_DIR,
+      });
+      return emptyData;
+  }
+};
+
 class TemplateOp {
-  /* 追加模板 */
-  static async add(template: Omit<BaseTemplate, "id" | "usedCount">) {
-    const data = await readData();
-    if (Object.keys(data).length === 0) {
-      return {};
-    }
-    const _data = data as StorageData;
+  /**
+   * 追加模板
+   *
+   * @remarks
+   * 不会与同名模板冲突，不会修改入参
+   *
+   * @returns 添加模板之后的完整数据
+   */
+  static add(
+    templates: BaseTemplate[],
+    template: Omit<BaseTemplate, "id" | "usedCount">,
+  ) {
+    // 生成ID | 置零使用次数
     Object.assign(template, {
       id: genenrateId(),
       usedCount: 0,
     });
-    _data.templates.push(template as BaseTemplate);
-    writeData(_data);
-    return _data;
+
+    return [...templates, template as BaseTemplate];
   }
 
-  /* 删除模板 */
-  static async del(templateId: string) {
-    const data = await readData();
-    if (Object.keys(data).length === 0) {
-      return {};
-    } else if ((data as StorageData).templates.length === 0) {
-      return {};
-    }
-    const _data = data as StorageData;
-    _data.templates = _data.templates.filter(
-      (template) => template.id !== templateId,
+  /**
+   * 删除模板
+   *
+   * @remarks
+   * - ID是唯一的，理论上不会存在错误删除的情况
+   * - 不会修改入参
+   *
+   * @returns 删除给定模板之后的完整数据
+   *
+   */
+  static del(templates: BaseTemplate[], templateId: string) {
+    return templates.filter((template) => template.id !== templateId);
+  }
+
+  /**
+   * 查询模板
+   *
+   * @returns 如果模板不存在，返回 undefined
+   */
+  static query(templates: BaseTemplate[], templateId: string) {
+    return templates.find((template) => template.id === templateId);
+  }
+
+  /**
+   * 更新模板
+   *
+   * @remarks
+   * - 如果模板不存在，返回元数据
+   * - 不会修改入参
+   */
+  static update(
+    templates: BaseTemplate[],
+    templateId: string,
+    updateFileds: Partial<BaseTemplate>,
+  ) {
+    return templates.map((template) =>
+      template.id === templateId ? { ...template, ...updateFileds } : template,
     );
-    writeData(_data);
-    return _data;
-  }
-
-  /* 更新模板 */
-  static async update(templateId: string, updateFileds: Partial<BaseTemplate>) {
-    const data = await readData();
-    if (Object.keys(data).length === 0) {
-      return {};
-    }
-    const _data = data as StorageData;
-    const template = _data.templates.find(
-      (template) => template.id === templateId,
-    );
-    if (template) {
-      Object.assign(template, updateFileds);
-      writeData(_data);
-    }
-    return _data;
-  }
-
-  /* 查询模板 */
-  static async query(templateId: string) {
-    const data = await readData();
-    if (Object.keys(data).length === 0) {
-      return {};
-    }
-    const _data = data as StorageData;
-    return _data.templates.find((template) => template.id === templateId);
   }
 }
 
 class InstanceOp {
-  /* 添加实例 */
-  static async add(templateId: string) {
-    const data = await readData();
-    if (Object.keys(data).length === 0) {
-      return {};
-    }
+  /* 根据模板生成实例 */
+  static generate(template: BaseTemplate) {
+    return {
+      type: template.type,
+      instanceId: genenrateId(),
+      templateId: template.id,
+      templateName: template.name,
+      templateDesc: template.desc,
+      templatePoints: template.points,
+      templatePointsExplan: template.pointsExplan,
+      templateRepeatCount: template.repeatCount,
+      createTime: getCurTime(),
+    } as BaseInstance;
+  }
 
-    const _data = data as StorageData;
-    const template = _data.templates.find(
-      (template) => template.id === templateId,
-    );
-    if (template) {
-      template.usedCount++;
-      const instance: BaseInstance = {
-        type: template.type,
-        instanceId: genenrateId(),
-        templateId: template.id,
-        templateName: template.name,
-        templateDesc: template.desc,
-        templatePoints: template.points,
-        templatePointsExplan: template.pointsExplan,
-        templateRepeatCount: template.repeatCount,
-        createTime: getCurTime(),
-      };
-      _data.instances.push(instance);
-      writeData(_data);
-      return _data;
-    } else {
-      return {};
-    }
+  /* 添加实例 */
+  static add(instances: BaseInstance[], template: BaseTemplate) {
+    const newInstance = this.generate(template);
+    return [...instances, newInstance];
   }
 
   /* 删除实例 */
-  static async del(instanceId: string, templateId: string) {
-    const data = await readData();
-    if (Object.keys(data).length === 0) {
-      return {};
-    }
-    const _data = data as StorageData;
-    const template = _data.templates.find(
-      (template) => template.id === templateId,
-    );
-    if (template) {
-      template.usedCount--;
-      if (template.usedCount < 0) {
-        template.usedCount = 0;
-      }
-    }
-    _data.instances = _data.instances.filter(
-      (instance) => instance.instanceId !== instanceId,
-    );
-    writeData(_data);
-    return _data;
+  static del(instances: BaseInstance[], instanceId: string) {
+    return instances.filter((instance) => instance.instanceId !== instanceId);
   }
 }
 
-const updatePoints = async (points: number) => {
-  const data = await readData();
-  if (Object.keys(data).length === 0) {
-    return {};
-  }
-  const _data = data as StorageData;
-  _data.points = points;
-  console.log(_data);
-  writeData(_data);
-};
-
-export { readData, writeData, TemplateOp, InstanceOp, updatePoints };
+export { readData, writeData, TemplateOp, InstanceOp };

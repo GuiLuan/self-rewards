@@ -6,11 +6,8 @@ import {
   ConfigProvider,
   Dropdown,
   Popconfirm,
-  Modal,
-  Form,
-  Input,
-  InputNumber,
 } from "antd";
+import { useContext, useState } from "react";
 import { IoMdTimer } from "react-icons/io";
 import { BiDetail } from "react-icons/bi";
 import { PiCurrencyDollarSimpleDuotone } from "react-icons/pi";
@@ -21,34 +18,34 @@ import { GrMore } from "react-icons/gr";
 import { RiDeleteBinLine } from "react-icons/ri";
 import { FaRegEdit } from "react-icons/fa";
 
-import { BaseTemplate } from "../struct/template";
-import { BaseInstance } from "../struct/instance";
-import { InstanceOp, TemplateOp } from "../utils/data";
-import { useContext, useState } from "react";
-import { PointsContext, UpdatePageContext } from "./ctx";
+import { BaseInstance, BaseTemplate } from "../struct";
+import { InstanceOp, TemplateOp } from "../utils";
+import { UpdateDataContext } from "../context";
+import { FormModal } from "./modal";
 
 function TemplateCard({ template }: { template: BaseTemplate }) {
   const [open, setOpen] = useState(false);
-  const [form] = Form.useForm();
-  const { points: globalPoints, setPoints: setGlobalPoints } =
-    useContext(PointsContext);
-  const { updatePage } = useContext(UpdatePageContext);
 
-  const { type, id, name, desc, points, pointsExplan, repeatCount, usedCount } =
-    template;
+  const { data, updateData } = useContext(UpdateDataContext);
+
+  template;
   return (
     <Card
       title={
-        <Tooltip title={name} placement="bottomLeft">
-          <p>{name.length >= 18 ? name.slice(0, 18) + "..." : name}</p>
+        <Tooltip title={template.name} placement="bottomLeft">
+          <p>
+            {template.name.length >= 18
+              ? template.name.slice(0, 18) + "..."
+              : template.name}
+          </p>
         </Tooltip>
       }
       extra={
         <Space>
-          <Tooltip title={pointsExplan} placement="bottomLeft">
+          <Tooltip title={template.pointsExplan} placement="bottomLeft">
             <Space size={1} className="cursor-help text-green-700">
               <PiCurrencyDollarSimpleDuotone />
-              <p>{points}</p>
+              <p>{template.points}</p>
             </Space>
           </Tooltip>
           <Dropdown
@@ -72,7 +69,13 @@ function TemplateCard({ template }: { template: BaseTemplate }) {
                       okText="确定"
                       cancelText="取消"
                       onConfirm={() => {
-                        TemplateOp.del(id);
+                        updateData({
+                          ...data,
+                          templates: TemplateOp.del(
+                            data.templates,
+                            template.id,
+                          ),
+                        });
                       }}
                     >
                       <p>删除</p>
@@ -85,90 +88,19 @@ function TemplateCard({ template }: { template: BaseTemplate }) {
           >
             <GrMore className="text-gray-500" />
           </Dropdown>
-          <Modal
+          <FormModal
+            modalTitle="修改模板"
             open={open}
-            title="修改模板"
-            okText="确认"
-            cancelText="取消"
-            okButtonProps={{
-              autoFocus: true,
-              htmlType: "submit",
+            setOpen={setOpen}
+            onSubmit={(form) => {
+              updateData({
+                ...data,
+                templates: TemplateOp.update(data.templates, template.id, form),
+              });
+              setOpen(false);
             }}
-            onCancel={() => setOpen(false)}
-            modalRender={(dom) => (
-              <Form
-                labelCol={{ span: 4 }}
-                wrapperCol={{ span: 14 }}
-                layout="horizontal"
-                form={form}
-                name="form_in_modal"
-                clearOnDestroy
-                variant="filled"
-                onFinish={(f) => {
-                  TemplateOp.update(id, f);
-                  setOpen(false);
-                }}
-              >
-                {dom}
-              </Form>
-            )}
-          >
-            <Form.Item
-              name={"name"}
-              label="名称"
-              required
-              rules={[{ required: true, message: "请输入名称" }]}
-              initialValue={name}
-            >
-              <Space.Compact>
-                <Input defaultValue={name}></Input>
-              </Space.Compact>
-            </Form.Item>
-            <Form.Item
-              name={"desc"}
-              label="详情"
-              required
-              rules={[{ required: true, message: "详情不能为空" }]}
-              initialValue={desc}
-            >
-              <Input.TextArea
-                autoSize={{ minRows: 2, maxRows: 4 }}
-                defaultValue={desc}
-              ></Input.TextArea>
-            </Form.Item>
-            <Form.Item
-              name={"points"}
-              label="点数"
-              required
-              rules={[{ required: true, message: "点数不能为空" }]}
-              initialValue={points}
-            >
-              <InputNumber defaultValue={points}></InputNumber>
-            </Form.Item>
-            <Form.Item
-              name={"pointsExplan"}
-              label="算式"
-              required
-              tooltip={{ title: "点数计算说明" }}
-              rules={[{ required: true, message: "点数说明不能为空" }]}
-              initialValue={pointsExplan}
-            >
-              <Input.TextArea
-                autoSize={{ minRows: 2, maxRows: 4 }}
-                defaultValue={pointsExplan}
-              ></Input.TextArea>
-            </Form.Item>
-            <Form.Item
-              name={"repeatCount"}
-              label="限额"
-              required
-              tooltip={{ title: "-1表示无限" }}
-              rules={[{ required: true, message: "限额不能为空" }]}
-              initialValue={repeatCount}
-            >
-              <InputNumber defaultValue={repeatCount}></InputNumber>
-            </Form.Item>
-          </Modal>
+            initialValues={template}
+          />
         </Space>
       }
       className="ml-3 mt-3 h-44 w-64"
@@ -178,14 +110,18 @@ function TemplateCard({ template }: { template: BaseTemplate }) {
           <div className="flex flex-col gap-1 text-gray-500">
             <Space>
               <BiDetail />
-              <Tooltip title={desc} placement="bottomLeft">
+              <Tooltip title={template.desc} placement="bottomLeft">
                 <p className="underline underline-offset-1">详情</p>
               </Tooltip>
             </Space>
-            <Space className={usedCount >= repeatCount ? "text-red-500" : ""}>
+            <Space
+              className={
+                template.usedCount >= template.repeatCount ? "text-red-500" : ""
+              }
+            >
               <IoInfiniteOutline />
               <p>
-                次数 : {usedCount} / {repeatCount}
+                次数 : {template.usedCount} / {template.repeatCount}
               </p>
             </Space>
           </div>
@@ -193,27 +129,46 @@ function TemplateCard({ template }: { template: BaseTemplate }) {
             theme={{
               components: {
                 Button: {
-                  colorPrimary: type === "quest" ? "#f8861b" : "#22c55e",
+                  colorPrimary:
+                    template.type === "quest" ? "#f8861b" : "#22c55e",
                   algorithm: true,
                 },
               },
             }}
           >
-            <Button
-              type="primary"
-              icon={
-                type === "quest" ? <FaWineBottle /> : <RiShoppingCartLine />
-              }
-              onClick={() => {
-                setGlobalPoints(globalPoints + points);
-                InstanceOp.add(id);
-                updatePage();
+            <Popconfirm
+              okText="确定"
+              cancelText="取消"
+              title="你确定吗？"
+              onConfirm={() => {
+                updateData({
+                  ...data,
+                  templates: TemplateOp.update(data.templates, template.id, {
+                    usedCount: template.usedCount + 1,
+                  }),
+                  instances: InstanceOp.add(data.instances, template),
+                  points:
+                    template.type === "quest"
+                      ? data.points + template.points
+                      : data.points - template.points,
+                });
               }}
-              disabled={usedCount >= repeatCount}
-              className="absolute right-4 mt-1"
             >
-              {type === "quest" ? "达成" : "兑换"}
-            </Button>
+              <Button
+                type="primary"
+                icon={
+                  template.type === "quest" ? (
+                    <FaWineBottle />
+                  ) : (
+                    <RiShoppingCartLine />
+                  )
+                }
+                disabled={template.usedCount >= template.repeatCount}
+                className="absolute right-4 mt-1"
+              >
+                {template.type === "quest" ? "达成" : "兑换"}
+              </Button>
+            </Popconfirm>
           </ConfigProvider>
         </>
       }
@@ -273,8 +228,8 @@ function HistoryInstanceCard({ instance }: { instance: BaseInstance }) {
 }
 
 function TodayInstanceCard({ instance }: { instance: BaseInstance }) {
-  const { updatePage } = useContext(UpdatePageContext);
-  const { points, setPoints } = useContext(PointsContext);
+  const { data, updateData } = useContext(UpdateDataContext);
+
   return (
     <div className="relative">
       <HistoryInstanceCard instance={instance} />
@@ -283,9 +238,25 @@ function TodayInstanceCard({ instance }: { instance: BaseInstance }) {
           type="primary"
           danger
           onClick={() => {
-            setPoints(points - instance.templatePoints);
-            InstanceOp.del(instance.instanceId, instance.templateId);
-            updatePage();
+            let templates;
+            const template = TemplateOp.query(
+              data.templates,
+              instance.templateId,
+            );
+            if (template === undefined) templates = data.templates;
+            else
+              templates = TemplateOp.update(data.templates, template.id, {
+                usedCount: template.usedCount - 1,
+              });
+            updateData({
+              ...data,
+              templates: templates,
+              instances: InstanceOp.del(data.instances, instance.instanceId),
+              points:
+                instance.type === "quest"
+                  ? data.points - instance.templatePoints
+                  : data.points + instance.templatePoints,
+            });
           }}
         >
           取消

@@ -7,4 +7,11 @@ interface StorageData {
   points: number;
 }
 
+const emptyData: StorageData = {
+  templates: [],
+  instances: [],
+  points: 0,
+};
+
+export { emptyData };
 export type { StorageData };

@@ -1,49 +1,42 @@
-import { useRef, useState } from "react";
-import { useAsyncEffect } from "ahooks";
+import { useState } from "react";
 
-import { Navigation } from "./components/navigation";
-import { PageType } from "./components/navigation";
-import ShowPage from "./components/showPage";
-import Status from "./components/status";
-import { readData, updatePoints } from "./utils/data";
-import { StorageData } from "./struct/data";
-import { PointsContext } from "./components/ctx";
+import { Navigation, ShowPage, Status, PageType } from "./components";
+import { UpdateDataContext } from "./context";
+import { useAsyncEffect, useUpdateEffect } from "ahooks";
+import { readData, writeData } from "./utils/data";
+import { emptyData, StorageData } from "./struct";
 
 function App() {
-  // 页面切换
+  /* 由 Navigation 控制页面切换，并被 ShowPage 感知 */
   const [showPagePos, setShowPagePos] = useState<PageType>("today");
-  const [points, setPoints] = useState(0);
+  /* 数据驱动控制页面渲染，将数据的操纵方法放到各个组件中 */
+  const [storageData, setStorageData] = useState<StorageData>(emptyData);
 
-  const dataRef = useRef<StorageData>({
-    templates: [],
-    instances: [],
-    points: 0,
-  });
-
+  // 仅在第一次组件挂载时读取数据，完成同步
   useAsyncEffect(async () => {
-    if (dataRef.current === undefined) {
-      const data = await readData();
-      dataRef.current = data;
-    }
-  }, [points]);
+    const data = await readData();
+    setStorageData(data);
+  }, []);
+
+  // 在第一次挂载之后，每当 StorageData 发生变化，保存数据到本地
+  useUpdateEffect(() => {
+    writeData(storageData);
+  }, [storageData]);
 
   return (
     <div className="relative flex h-full w-full flex-col">
       <div className="flex flex-1 flex-row">
         <Navigation switchFunc={setShowPagePos} />
-        <PointsContext.Provider
+        <UpdateDataContext.Provider
           value={{
-            points,
-            setPoints: (points: number) => {
-              setPoints(points);
-              updatePoints(points);
-            },
+            data: storageData,
+            updateData: setStorageData,
           }}
         >
-          <ShowPage showPagePos={showPagePos} />
-        </PointsContext.Provider>
+          <ShowPage data={storageData} showPagePos={showPagePos} />
+        </UpdateDataContext.Provider>
       </div>
-      <Status points={points} />
+      <Status points={storageData.points} />
     </div>
   );
 }
