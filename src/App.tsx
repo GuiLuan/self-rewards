@@ -36,7 +36,7 @@ function App() {
           <ShowPage data={storageData} showPagePos={showPagePos} />
         </UpdateDataContext.Provider>
       </div>
-      <Status points={storageData.points} />
+      <Status data={storageData} />
     </div>
   );
 }

@@ -53,7 +53,7 @@ function TemplateModal({
           onFinish={(values) => {
             console.log(values);
             // 上传了文件，则提取 response
-            if (values.base64 !== undefined) {
+            if (values.base64 !== undefined && typeof values.base64 !== "string") {
               values.base64 = values.base64.file.response;
             }
             onSubmit(values);
@@ -65,7 +65,14 @@ function TemplateModal({
         </Form>
       )}
     >
-      <Form.Item name="type" label="类型" required initialValue="quest">
+      <Form.Item
+        name="type"
+        label="类型"
+        required
+        initialValue={
+          initialValues?.type === undefined ? "quest" : initialValues.type
+        }
+      >
         <Radio.Group>
           <Radio.Button value="quest">成就</Radio.Button>
           <Radio.Button value="reward">奖励</Radio.Button>
@@ -130,6 +137,7 @@ function TemplateModal({
         label="图片"
         required
         rules={[{ required: true, message: "图片不能为空" }]}
+        initialValue={initialValues?.base64}
       >
         <Upload
           customRequest={(props) =>

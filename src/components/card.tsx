@@ -22,11 +22,13 @@ import { RiShoppingCartLine } from "react-icons/ri";
 import { GrMore } from "react-icons/gr";
 import { RiDeleteBinLine } from "react-icons/ri";
 import { FaRegEdit } from "react-icons/fa";
+import { FaStar, FaRegStar } from "react-icons/fa";
 
 import { BaseInstance, BaseTemplate } from "../struct";
 import { InstanceOp, TemplateOp } from "../utils";
 import { UpdateDataContext } from "../context";
 import { InstanceModal, TemplateModal } from "./modal";
+import { QuestInstance, RewardInstance } from "../struct/instance";
 
 function TemplateCard({ template }: { template: BaseTemplate }) {
   const [open, setOpen] = useState(false);
@@ -98,7 +100,7 @@ function TemplateCard({ template }: { template: BaseTemplate }) {
                         });
                         notification.warning({
                           message: "删除成功",
-                          description: `${template.type === "quest" ? "🏆 成就" : "✨ 奖励"} ${template.name}`,
+                          description: `${template.type === "quest" ? "🏆 成就" : "🎁 奖励"} ${template.name}`,
                         });
                       }}
                     >
@@ -106,6 +108,40 @@ function TemplateCard({ template }: { template: BaseTemplate }) {
                     </Popconfirm>
                   ),
                 },
+                template.type === "reward" && data.trackReward !== template.id
+                  ? {
+                      key: "track",
+                      icon: <FaRegStar />,
+                      label: "目标",
+                      onClick: () => {
+                        updateData({
+                          ...data,
+                          trackReward: template.id,
+                        });
+                        notification.success({
+                          message: "设置目标",
+                          description: `🎁 ${template.name} 被设为目标`,
+                        });
+                      },
+                    }
+                  : null,
+                template.type === "reward" && data.trackReward === template.id
+                  ? {
+                      key: "untrack",
+                      icon: <FaStar />,
+                      label: "取消目标",
+                      onClick: () => {
+                        updateData({
+                          ...data,
+                          trackReward: undefined,
+                        });
+                        notification.warning({
+                          message: "取消目标",
+                          description: `🎁 ${template.name} 不再是目标`,
+                        });
+                      },
+                    }
+                  : null,
               ],
             }}
             className="hover:cursor-pointer"
@@ -178,12 +214,16 @@ function TemplateCard({ template }: { template: BaseTemplate }) {
                     template,
                     v.points,
                     v.pointsExplan,
-                  ),
+                  ) as (QuestInstance | RewardInstance)[],
                   points: data.points + v.points,
                 });
                 notification.success({
                   message: `🏆 达成：${template.name}`,
-                  description: `获得 ${v.points} 点数`,
+                  description:
+                    `获得 ${v.points} 点数` +
+                    (data.trackReward === undefined
+                      ? ""
+                      : `，距离🎁 ${TemplateOp.query(data.templates, data.trackReward)!.name} 还有 ${TemplateOp.query(data.templates, data.trackReward)!.points - (data.points + v.points)} 点数`),
                 });
               }}
             />
@@ -210,12 +250,15 @@ function TemplateCard({ template }: { template: BaseTemplate }) {
                             usedCount: template.usedCount + 1,
                           },
                         ),
-                        instances: InstanceOp.add(data.instances, template),
+                        instances: InstanceOp.add(data.instances, template) as (
+                          | QuestInstance
+                          | RewardInstance
+                        )[],
                         points: data.points - template.points,
                       });
                     }
                     notification.success({
-                      message: `✨ 兑换：${template.name}`,
+                      message: `🎁 兑换：${template.name}`,
                       description: `消耗 ${template.points} 点数`,
                     });
                     return;
@@ -262,10 +305,10 @@ function HistoryInstanceCard({ instance }: { instance: BaseInstance }) {
         <Tooltip title={templateName} placement="bottomLeft">
           <p>
             {templateName.length >= 9
-              ? `${instance.type === "quest" ? "🏆 " : "✨ "}` +
+              ? `${instance.type === "quest" ? "🏆 " : "🎁 "}` +
                 templateName.slice(0, 9) +
                 "..."
-              : `${instance.type === "quest" ? "🏆 " : "✨ "}` + templateName}
+              : `${instance.type === "quest" ? "🏆 " : "🎁 "}` + templateName}
           </p>
         </Tooltip>
       }
@@ -294,7 +337,7 @@ function HistoryInstanceCard({ instance }: { instance: BaseInstance }) {
             <Drawer
               open={open}
               onClose={() => setOpen(false)}
-              title={(instance.type === "quest" ? "🏆 " : "✨ ") + templateName}
+              title={(instance.type === "quest" ? "🏆 " : "🎁 ") + templateName}
             >
               <Typography>
                 <Typography.Title level={5}>
@@ -355,9 +398,30 @@ function TodayInstanceCard({ instance }: { instance: BaseInstance }) {
       <Drawer
         open={open}
         onClose={() => setOpen(false)}
-        title={instance.templateName}
+        title={
+          (instance.type === "quest" ? "🏆 " : "🎁 ") + instance.templateName
+        }
       >
-        {instance.templateDesc}
+        <Typography>
+          <Typography.Title level={5}>
+            {instance.type === "quest" ? "成就描述" : "奖励描述"}
+          </Typography.Title>
+          <Typography.Paragraph>{instance.templateDesc}</Typography.Paragraph>
+          <Divider />
+          {instance.pointsExplan !== undefined &&
+          instance.pointsExplan !== undefined ? (
+            <>
+              <Typography.Title level={5}>自评点数</Typography.Title>
+              <Typography.Paragraph>{instance.points}</Typography.Paragraph>
+              <Divider />
+              <Typography.Title level={5}>点数解释</Typography.Title>
+              <Typography.Paragraph>
+                {instance.pointsExplan}
+              </Typography.Paragraph>
+              <Divider />
+            </>
+          ) : null}
+        </Typography>
       </Drawer>
       <div className="absolute left-0 top-0 z-50 ml-3 mt-3 flex h-44 w-64 items-center justify-center rounded-lg bg-[#0000006c]">
         <ConfigProvider
@@ -390,7 +454,10 @@ function TodayInstanceCard({ instance }: { instance: BaseInstance }) {
               updateData({
                 ...data,
                 templates: templates,
-                instances: InstanceOp.del(data.instances, instance.instanceId),
+                instances: InstanceOp.del(
+                  data.instances,
+                  instance.instanceId,
+                ) as (QuestInstance | RewardInstance)[],
                 points:
                   instance.type === "quest" && instance.points !== undefined
                     ? data.points - instance.points
@@ -398,7 +465,7 @@ function TodayInstanceCard({ instance }: { instance: BaseInstance }) {
               });
               notification.warning({
                 message:
-                  (instance.type === "quest" ? "🏆 取消：" : "✨ 退还：") +
+                  (instance.type === "quest" ? "🏆 取消：" : "🎁 退还：") +
                   instance.templateName,
                 description: `点数 ${instance.type === "quest" && instance.points !== undefined ? instance.points : instance.templatePoints} 已${instance.type === "quest" ? "扣除" : "返还"}`,
               });

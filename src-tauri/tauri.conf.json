@@ -13,7 +13,7 @@
     "windows": [
       {
         "title": "self-rewards",
-        "minHeight": 620,
+        "minHeight": 775,
         "minWidth": 930
       }
     ],

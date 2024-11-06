@@ -13,8 +13,17 @@
       "identifier": "fs:scope",
       "allow": [{ "path": "$APPDATA" }, { "path": "$APPDATA/**" }, {"path": "$DESKTOP"}, {"path": "$DESKTOP/**"}]
     },
-    "fs:allow-write-text-file",
-    "fs:allow-read-text-file",
-    "fs:allow-exists"
+    {
+      "identifier": "fs:allow-write-text-file",
+      "allow": [{ "path": "$APPDATA" }, { "path": "$APPDATA/**" }, {"path": "$DESKTOP"}, {"path": "$DESKTOP/**"}]
+    },
+    {
+      "identifier": "fs:allow-read-text-file",
+      "allow": [{ "path": "$APPDATA" }, { "path": "$APPDATA/**" }, {"path": "$DESKTOP"}, {"path": "$DESKTOP/**"}]
+    },
+    {
+      "identifier": "fs:allow-exists",
+      "allow": [{ "path": "$APPDATA" }, { "path": "$APPDATA/**" }, {"path": "$DESKTOP"}, {"path": "$DESKTOP/**"}]
+    }
   ]
 }

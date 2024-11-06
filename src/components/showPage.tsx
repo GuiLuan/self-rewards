@@ -1,4 +1,4 @@
-import { FloatButton, notification } from "antd";
+import { Badge, FloatButton, notification } from "antd";
 import { GrAdd } from "react-icons/gr";
 
 import { TemplateCard, HistoryInstanceCard, TodayInstanceCard } from "./card";
@@ -46,9 +46,15 @@ function RewardPage({ data }: { data: StorageData }) {
 
   return (
     <>
-      {templates.map((template) => (
-        <TemplateCard key={template.id} template={template} />
-      ))}
+      {templates.map((template) =>
+        data.trackReward === template.id ? (
+          <Badge.Ribbon text="目标" color="volcano">
+            <TemplateCard key={template.id} template={template} />
+          </Badge.Ribbon>
+        ) : (
+          <TemplateCard key={template.id} template={template} />
+        ),
+      )}
     </>
   );
 }

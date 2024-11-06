@@ -20,6 +20,8 @@ interface BaseInstance {
 
 interface QuestInstance extends BaseInstance {
   type: "quest";
+  points: number;
+  pointsExplan: string;
 }
 
 interface RewardInstance extends BaseInstance {
