@@ -1,4 +1,4 @@
-import { FloatButton } from "antd";
+import { FloatButton, notification } from "antd";
 import { GrAdd } from "react-icons/gr";
 
 import { TemplateCard, HistoryInstanceCard, TodayInstanceCard } from "./card";
@@ -117,6 +117,10 @@ function ShowPage({
             templates: TemplateOp.add(data.templates, form),
           });
           setOpen(false);
+          notification.success({
+            message: `${form.type === "quest" ? "🏆" : "✨"} 添加${form.type === "quest" ? "成就" : "奖励"}`,
+            description: `${form.name} 已添加`,
+          });
         }}
       />
     </>

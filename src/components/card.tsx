@@ -6,6 +6,7 @@ import {
   ConfigProvider,
   Dropdown,
   Popconfirm,
+  notification,
 } from "antd";
 import { useContext, useState } from "react";
 import { IoMdTimer } from "react-icons/io";
@@ -76,6 +77,10 @@ function TemplateCard({ template }: { template: BaseTemplate }) {
                             template.id,
                           ),
                         });
+                        notification.warning({
+                          message: "删除成功",
+                          description: `${template.type === "quest" ? "🏆 成就" : "✨ 奖励"} ${template.name}`,
+                        });
                       }}
                     >
                       <p>删除</p>
@@ -139,8 +144,18 @@ function TemplateCard({ template }: { template: BaseTemplate }) {
             <Popconfirm
               okText="确定"
               cancelText="取消"
-              title="你确定吗？"
+              title="确定要执行此操作？"
               onConfirm={() => {
+                if (
+                  template.type === "reward" &&
+                  data.points < template.points
+                ) {
+                  notification.error({
+                    message: "点数不足",
+                    description: `当前点数：${data.points}，所需点数：${template.points}`,
+                  });
+                  return;
+                }
                 updateData({
                   ...data,
                   templates: TemplateOp.update(data.templates, template.id, {
@@ -151,6 +166,10 @@ function TemplateCard({ template }: { template: BaseTemplate }) {
                     template.type === "quest"
                       ? data.points + template.points
                       : data.points - template.points,
+                });
+                notification.success({
+                  message: `${template.type === "quest" ? "🏆 达成：" : "✨ 兑换："}${template.name}`,
+                  description: `${template.type === "quest" ? "获得" : "消耗"} ${template.points} 点数`,
                 });
               }}
             >
@@ -190,8 +209,10 @@ function HistoryInstanceCard({ instance }: { instance: BaseInstance }) {
         <Tooltip title={templateName} placement="bottomLeft">
           <p>
             {templateName.length >= 18
-              ? templateName.slice(0, 18) + "..."
-              : templateName}
+              ? `${instance.type === "quest" ? "🏆 " : "✨ "}` +
+                templateName.slice(0, 18) +
+                "..."
+              : `${instance.type === "quest" ? "🏆 " : "✨ "}` + templateName}
           </p>
         </Tooltip>
       }
@@ -256,6 +277,12 @@ function TodayInstanceCard({ instance }: { instance: BaseInstance }) {
                 instance.type === "quest"
                   ? data.points - instance.templatePoints
                   : data.points + instance.templatePoints,
+            });
+            notification.warning({
+              message:
+                (instance.type === "quest" ? "🏆 取消：" : "✨ 退还：") +
+                instance.templateName,
+              description: `点数 ${instance.templatePoints} 已${instance.type === "quest" ? "扣除" : "返还"}`,
             });
           }}
         >
