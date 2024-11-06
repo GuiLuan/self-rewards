@@ -7,6 +7,8 @@ import {
   Dropdown,
   Popconfirm,
   notification,
+  Image,
+  Drawer,
 } from "antd";
 import { useContext, useState } from "react";
 import { IoMdTimer } from "react-icons/io";
@@ -29,7 +31,6 @@ function TemplateCard({ template }: { template: BaseTemplate }) {
 
   const { data, updateData } = useContext(UpdateDataContext);
 
-  template;
   return (
     <Card
       title={
@@ -108,10 +109,17 @@ function TemplateCard({ template }: { template: BaseTemplate }) {
           />
         </Space>
       }
-      className="ml-3 mt-3 h-44 w-64"
+      className={
+        template.base64 === undefined
+          ? "ml-3 mt-3 h-44 w-64"
+          : "ml-3 mt-3 h-[390px] w-64"
+      }
     >
       {
         <>
+          {template.base64 === undefined ? null : (
+            <Image height={"200px"} src={template.base64} />
+          )}
           <div className="flex flex-col gap-1 text-gray-500">
             <Space>
               <BiDetail />
@@ -250,11 +258,22 @@ function HistoryInstanceCard({ instance }: { instance: BaseInstance }) {
 
 function TodayInstanceCard({ instance }: { instance: BaseInstance }) {
   const { data, updateData } = useContext(UpdateDataContext);
+  const [open, setOpen] = useState(false);
 
   return (
     <div className="relative">
       <HistoryInstanceCard instance={instance} />
+      <Drawer
+        open={open}
+        onClose={() => setOpen(false)}
+        title={instance.templateName}
+      >
+        {instance.templateDesc}
+      </Drawer>
       <div className="absolute left-0 top-0 z-50 ml-3 mt-3 flex h-44 w-64 items-center justify-center rounded-lg bg-[#0000006c]">
+        <Button className="mr-3" type="primary" onClick={() => setOpen(true)}>
+          详情
+        </Button>
         <Button
           type="primary"
           danger

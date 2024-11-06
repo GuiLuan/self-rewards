@@ -81,7 +81,7 @@ const selectPage = (page: PageType, data: StorageData) => {
       break;
   }
   return (
-    <div className="relative ml-24 flex flex-1 flex-row flex-wrap place-content-start">
+    <div className="relative ml-24 flex flex-1 flex-row flex-wrap place-content-start pb-3">
       {showPage}
     </div>
   );
@@ -102,11 +102,15 @@ function ShowPage({
   return (
     <>
       {selectPage(showPagePos, data)}
-      <FloatButton
-        icon={<GrAdd />}
-        type="primary"
-        onClick={() => setOpen(true)}
-      />
+      <FloatButton.Group shape="circle">
+        <FloatButton
+          icon={<GrAdd />}
+          type="primary"
+          tooltip="新增模板"
+          onClick={() => setOpen(true)}
+        />
+      </FloatButton.Group>
+
       <FormModal
         modalTitle="新增模板"
         open={open}

@@ -1,6 +1,17 @@
-import { Form, Modal, Input, Radio, Space, InputNumber } from "antd";
+import {
+  Form,
+  Modal,
+  Input,
+  Radio,
+  Space,
+  InputNumber,
+  Upload,
+  UploadFile,
+} from "antd";
 
 import { BaseTemplate } from "../struct";
+import { fileToBase64 } from "../utils";
+import { useState } from "react";
 
 function FormModal({
   modalTitle,
@@ -16,6 +27,9 @@ function FormModal({
   initialValues?: Partial<BaseTemplate>;
 }) {
   const [form] = Form.useForm();
+
+  const [fileList, setFileList] = useState<UploadFile[]>([]);
+
   return (
     <Modal
       open={open}
@@ -37,8 +51,14 @@ function FormModal({
           clearOnDestroy
           variant="filled"
           onFinish={(values) => {
+            console.log(values);
+            // 上传了文件，则提取 response
+            if (values.base64 !== undefined) {
+              values.base64 = values.base64.file.response;
+            }
             onSubmit(values);
             form.resetFields();
+            setFileList([]);
           }}
         >
           {dom}
@@ -59,7 +79,7 @@ function FormModal({
         initialValue={initialValues?.name}
       >
         <Space.Compact>
-          <Input defaultValue={initialValues?.name}></Input>
+          <Input defaultValue={initialValues?.name} />
         </Space.Compact>
       </Form.Item>
       <Form.Item
@@ -81,7 +101,7 @@ function FormModal({
         rules={[{ required: true, message: "点数不能为空" }]}
         initialValue={initialValues?.points}
       >
-        <InputNumber defaultValue={initialValues?.points}></InputNumber>
+        <InputNumber defaultValue={initialValues?.points} />
       </Form.Item>
       <Form.Item
         name={"pointsExplan"}
@@ -94,17 +114,35 @@ function FormModal({
         <Input.TextArea
           autoSize={{ minRows: 2, maxRows: 4 }}
           defaultValue={initialValues?.pointsExplan}
-        ></Input.TextArea>
+        />
       </Form.Item>
       <Form.Item
         name={"repeatCount"}
         label="限额"
         required
-        tooltip={{ title: "-1表示无限" }}
         rules={[{ required: true, message: "限额不能为空" }]}
         initialValue={initialValues?.repeatCount}
       >
-        <InputNumber defaultValue={initialValues?.repeatCount}></InputNumber>
+        <InputNumber defaultValue={initialValues?.repeatCount} />
+      </Form.Item>
+      <Form.Item
+        name={"base64"}
+        label="图片"
+        required
+        rules={[{ required: true, message: "图片不能为空" }]}
+      >
+        <Upload
+          customRequest={(props) =>
+            fileToBase64(props.file as File).then((res) =>
+              props.onSuccess!(res),
+            )
+          }
+          listType="picture-card"
+          fileList={fileList}
+          onChange={({ fileList }) => setFileList(fileList)}
+        >
+          {fileList.length >= 1 ? null : <p>点击上传</p>}
+        </Upload>
       </Form.Item>
     </Modal>
   );

@@ -3,6 +3,7 @@ import {
   exists,
   readTextFile,
   writeTextFile,
+  readFile,
 } from "@tauri-apps/plugin-fs";
 
 import { emptyData, StorageData } from "../struct/data";
@@ -15,6 +16,20 @@ const DATA_DIR = import.meta.env.DEV
   ? BaseDirectory.Desktop
   : BaseDirectory.AppData;
 const DATA_FILE = "data.json";
+
+/**
+ * 将 File 转换为 Base64 格式的字符串
+ */
+const fileToBase64 = async (file: File) => {
+  const reader = new FileReader();
+  reader.readAsDataURL(file);
+  return new Promise((resolve, reject) => {
+    reader.onload = () => {
+      resolve(reader.result);
+    };
+    reader.onerror = reject;
+  });
+};
 
 /**
  * 覆盖性写入
@@ -142,4 +157,4 @@ class InstanceOp {
   }
 }
 
-export { readData, writeData, TemplateOp, InstanceOp };
+export { readData, writeData, TemplateOp, InstanceOp, fileToBase64 };

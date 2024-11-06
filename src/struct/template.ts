@@ -17,6 +17,7 @@ interface BaseTemplate {
   pointsExplan: string;
   repeatCount: number;
   usedCount: number;
+  base64?: string;
 }
 
 interface QuestTemplate extends BaseTemplate {
