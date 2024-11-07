@@ -53,7 +53,10 @@ function TemplateModal({
           onFinish={(values) => {
             console.log(values);
             // 上传了文件，则提取 response
-            if (values.base64 !== undefined && typeof values.base64 !== "string") {
+            if (
+              values.base64 !== undefined &&
+              typeof values.base64 !== "string"
+            ) {
               values.base64 = values.base64.file.response;
             }
             onSubmit(values);

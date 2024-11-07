@@ -71,6 +71,7 @@ function TemplateCard({ template }: { template: BaseTemplate }) {
             </Space>
           </Tooltip>
           <Dropdown
+            trigger={["click"]}
             menu={{
               items: [
                 {
@@ -172,7 +173,9 @@ function TemplateCard({ template }: { template: BaseTemplate }) {
       {
         <>
           {template.base64 === undefined ? null : (
-            <Image height={"200px"} src={template.base64} />
+            <div className="flex items-center justify-center pb-2">
+              <Image height={"200px"} src={template.base64} />
+            </div>
           )}
           <div className="flex flex-col gap-1 text-gray-500">
             <Space>
@@ -219,12 +222,14 @@ function TemplateCard({ template }: { template: BaseTemplate }) {
                 });
                 notification.success({
                   message: `🏆 达成：${template.name}`,
-                  description:
-                    `获得 ${v.points} 点数` +
-                    (data.trackReward === undefined
-                      ? ""
-                      : `，距离🎁 ${TemplateOp.query(data.templates, data.trackReward)!.name} 还有 ${TemplateOp.query(data.templates, data.trackReward)!.points - (data.points + v.points)} 点数`),
+                  description: `获得 ${v.points} 点数`,
                 });
+                if (data.trackReward !== undefined) {
+                  notification.info({
+                    message: `🎯 目标：${TemplateOp.query(data.templates, data.trackReward)!.name}`,
+                    description: `距离🎁 ${TemplateOp.query(data.templates, data.trackReward)!.name} 还有 ${TemplateOp.query(data.templates, data.trackReward)!.points - (data.points + v.points)} 点数`,
+                  });
+                }
               }}
             />
             <Popconfirm

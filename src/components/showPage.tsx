@@ -1,5 +1,6 @@
 import { Badge, FloatButton, notification } from "antd";
 import { GrAdd } from "react-icons/gr";
+import { FaSortAmountDownAlt } from "react-icons/fa";
 
 import { TemplateCard, HistoryInstanceCard, TodayInstanceCard } from "./card";
 import { PageType } from "./navigation";
@@ -9,6 +10,7 @@ import { TemplateOp } from "../utils/data";
 import { isToday } from "../utils/common";
 import { UpdateDataContext } from "../context";
 import { TemplateModal } from "./modal";
+import { BaseTemplate } from "../struct";
 
 function TodayPage({ data }: { data: StorageData }) {
   // 筛选出今天创建的instance
@@ -109,6 +111,20 @@ function ShowPage({
     <>
       {selectPage(showPagePos, data)}
       <FloatButton.Group shape="circle">
+        <FloatButton
+          icon={<FaSortAmountDownAlt />}
+          tooltip="排序模板"
+          onClick={() => {
+            updateData({
+              ...data,
+              templates: TemplateOp.sort(data.templates, data.trackReward),
+            });
+            notification.success({
+              message: "📈 模板已排序",
+              description: `${data.templates.length} 个模板已根据点数升序排序，点数相同的再根据已使用次数和次数限额的比值升序排序`,
+            });
+          }}
+        />
         <FloatButton
           icon={<GrAdd />}
           type="primary"

@@ -126,6 +126,38 @@ class TemplateOp {
       template.id === templateId ? { ...template, ...updateFileds } : template,
     );
   }
+
+  /**
+   * 排序模板，points升序排序，再按照 usedCount / repeatCount 升序排序
+   */
+  static sort(templates: BaseTemplate[], firstId?: string) {
+    return templates.slice().sort((a, b) => {
+      if (a.id === firstId) {
+        return -1;
+      } else if (b.id === firstId) {
+        return 1;
+      }
+      if (a.usedCount === a.repeatCount && b.usedCount !== b.repeatCount) {
+        return 1; // 将 a 放到后面
+      } else if (
+        a.usedCount !== a.repeatCount &&
+        b.usedCount === b.repeatCount
+      ) {
+        return -1; // 将 b 放到后面
+      } else if (
+        a.usedCount === a.repeatCount &&
+        b.usedCount === b.repeatCount
+      ) {
+        return 0; // 如果两者的 usedCount 等于 repeatCount，保持原顺序不变
+      } else {
+        if (a.points !== b.points) {
+          return a.points - b.points;
+        } else {
+          return a.usedCount / a.repeatCount - b.usedCount / b.repeatCount;
+        }
+      }
+    });
+  }
 }
 
 class InstanceOp {
