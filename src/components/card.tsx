@@ -302,6 +302,9 @@ function TemplateCard({ template }: { template: BaseTemplate }) {
                 ) {
                   data.topTemplateIds.map((t, i) => {
                     let template = TemplateOp.query(data.templates, t);
+                    if (template?.type !== "reward") {
+                      return;
+                    }
                     let points = v.points;
                     setTimeout(() => {
                       notification.info({
