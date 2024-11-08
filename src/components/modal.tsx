@@ -7,6 +7,7 @@ import {
   InputNumber,
   Upload,
   UploadFile,
+  Checkbox,
 } from "antd";
 
 import { BaseTemplate } from "../struct";
@@ -23,8 +24,8 @@ function TemplateModal({
   modalTitle: string;
   open: boolean;
   setOpen: (open: boolean) => void;
-  onSubmit: (values: BaseTemplate) => void;
-  initialValues?: Partial<BaseTemplate>;
+  onSubmit: (values: BaseTemplate & { onTop: true | undefined }) => void;
+  initialValues?: Partial<BaseTemplate & {onTop: true | undefined}>;
 }) {
   const [form] = Form.useForm();
 
@@ -154,6 +155,14 @@ function TemplateModal({
         >
           {fileList.length >= 1 ? null : <p>点击上传</p>}
         </Upload>
+      </Form.Item>
+      <Form.Item
+        name="onTop"
+        label="置顶"
+        initialValue={initialValues?.onTop}
+        valuePropName="checked"
+      >
+        <Checkbox />
       </Form.Item>
     </Modal>
   );

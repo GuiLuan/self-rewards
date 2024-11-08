@@ -10,6 +10,7 @@ import { TemplateOp } from "../utils/data";
 import { isToday } from "../utils/common";
 import { UpdateDataContext } from "../context";
 import { TemplateModal } from "./modal";
+import { BaseTemplate } from "../struct";
 
 function TodayPage({ data }: { data: StorageData }) {
   // 筛选出今天创建的instance
@@ -36,7 +37,7 @@ function QuestPage({ data }: { data: StorageData }) {
       {templates.map((template) =>
         Array.isArray(data.topTemplateIds) &&
         data.topTemplateIds.includes(template.id) ? (
-          <Badge.Ribbon text="任务" color="purple">
+          <Badge.Ribbon text="置顶" color="purple" key={template.id}>
             <TemplateCard key={template.id} template={template} />
           </Badge.Ribbon>
         ) : (
@@ -57,7 +58,7 @@ function RewardPage({ data }: { data: StorageData }) {
       {templates.map((template) =>
         Array.isArray(data.topTemplateIds) &&
         data.topTemplateIds.includes(template.id) ? (
-          <Badge.Ribbon text="目标" color="volcano">
+          <Badge.Ribbon text="目标" color="volcano" key={template.id}>
             <TemplateCard key={template.id} template={template} />
           </Badge.Ribbon>
         ) : (
@@ -148,9 +149,22 @@ function ShowPage({
         open={open}
         setOpen={setOpen}
         onSubmit={(form) => {
+          const { templates, id } = TemplateOp.add(data.templates, {
+            ...form,
+            onTop: undefined,
+          } as BaseTemplate);
+          let topTemplateIds = data.topTemplateIds;
+          if (form.onTop === true) {
+            if (Array.isArray(topTemplateIds)) {
+              topTemplateIds = [...topTemplateIds, id];
+            } else {
+              topTemplateIds = [id];
+            }
+          }
           updateData({
             ...data,
-            templates: TemplateOp.add(data.templates, form),
+            templates: templates,
+            topTemplateIds: topTemplateIds,
           });
           setOpen(false);
           notification.success({

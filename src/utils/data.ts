@@ -72,7 +72,7 @@ class TemplateOp {
    * @remarks
    * 不会与同名模板冲突，不会修改入参
    *
-   * @returns 添加模板之后的完整数据
+   * @returns 添加模板之后的完整数据和模板的ID
    */
   static add(
     templates: BaseTemplate[],
@@ -84,7 +84,10 @@ class TemplateOp {
       usedCount: 0,
     });
 
-    return [...templates, template as BaseTemplate];
+    return {
+      templates: [...templates, template as BaseTemplate],
+      id: (template as BaseTemplate).id,
+    };
   }
 
   /**

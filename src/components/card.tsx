@@ -82,34 +82,7 @@ function TemplateCard({ template }: { template: BaseTemplate }) {
                     setOpen(true);
                   },
                 },
-                {
-                  key: "delete",
-                  icon: <RiDeleteBinLine />,
-                  danger: true,
-                  label: (
-                    <Popconfirm
-                      title="确定删除吗？"
-                      okText="确定"
-                      cancelText="取消"
-                      onConfirm={() => {
-                        updateData({
-                          ...data,
-                          templates: TemplateOp.del(
-                            data.templates,
-                            template.id,
-                          ),
-                        });
-                        notification.warning({
-                          message: "删除成功",
-                          description: `${template.type === "quest" ? "🏆 成就" : "🎁 奖励"} ${template.name}`,
-                          showProgress: true,
-                        });
-                      }}
-                    >
-                      <p>删除</p>
-                    </Popconfirm>
-                  ),
-                },
+
                 template.type === "reward" &&
                 !data.topTemplateIds?.includes(template.id)
                   ? {
@@ -192,6 +165,34 @@ function TemplateCard({ template }: { template: BaseTemplate }) {
                       },
                     }
                   : null,
+                {
+                  key: "delete",
+                  icon: <RiDeleteBinLine />,
+                  danger: true,
+                  label: (
+                    <Popconfirm
+                      title="确定删除吗？"
+                      okText="确定"
+                      cancelText="取消"
+                      onConfirm={() => {
+                        updateData({
+                          ...data,
+                          templates: TemplateOp.del(
+                            data.templates,
+                            template.id,
+                          ),
+                        });
+                        notification.warning({
+                          message: "删除成功",
+                          description: `${template.type === "quest" ? "🏆 成就" : "🎁 奖励"} ${template.name}`,
+                          showProgress: true,
+                        });
+                      }}
+                    >
+                      <p>删除</p>
+                    </Popconfirm>
+                  ),
+                },
               ],
             }}
             className="hover:cursor-pointer"
@@ -203,13 +204,34 @@ function TemplateCard({ template }: { template: BaseTemplate }) {
             open={open}
             setOpen={setOpen}
             onSubmit={(form) => {
+              let topTemplateIds = data.topTemplateIds;
+              if (form.onTop === true) {
+                if (Array.isArray(topTemplateIds)) {
+                  topTemplateIds = [...topTemplateIds, template.id];
+                } else {
+                  topTemplateIds = [template.id];
+                }
+              }
               updateData({
                 ...data,
-                templates: TemplateOp.update(data.templates, template.id, form),
+                templates: TemplateOp.update(data.templates, template.id, {
+                  ...form,
+                  onTop: undefined,
+                } as BaseTemplate),
+                topTemplateIds: topTemplateIds,
               });
               setOpen(false);
+              notification.success({
+                message: "修改成功",
+                description: `🎉 ${template.name} 修改成功`,
+              });
             }}
-            initialValues={template}
+            initialValues={{
+              ...template,
+              onTop: data.topTemplateIds?.includes(template.id)
+                ? true
+                : undefined,
+            }}
           />
         </Space>
       }
