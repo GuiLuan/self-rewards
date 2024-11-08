@@ -164,7 +164,7 @@ class TemplateOp {
       }
     }
     return topArrayIds === undefined
-      ? templates.sort(sortFunc)
+      ? templates.slice().sort(sortFunc)
       : [
           ...topArrayIds.map((e) => templates.find((t) => t.id === e)!),
           ...templates

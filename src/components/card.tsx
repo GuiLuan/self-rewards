@@ -181,6 +181,13 @@ function TemplateCard({ template }: { template: BaseTemplate }) {
                             data.templates,
                             template.id,
                           ),
+                          topTemplateIds: data.topTemplateIds?.includes(
+                            template.id,
+                          )
+                            ? data.topTemplateIds?.filter(
+                                (id) => id !== template.id,
+                              )
+                            : data.topTemplateIds,
                         });
                         notification.warning({
                           message: "删除成功",
@@ -347,6 +354,13 @@ function TemplateCard({ template }: { template: BaseTemplate }) {
                           | RewardInstance
                         )[],
                         points: data.points - template.points,
+                        topTemplateIds:
+                          data.topTemplateIds?.includes(template.id) &&
+                          template.usedCount + 1 == template.repeatCount
+                            ? data.topTemplateIds.filter(
+                                (t) => t !== template.id,
+                              )
+                            : data.topTemplateIds,
                       });
                     }
                     notification.success({

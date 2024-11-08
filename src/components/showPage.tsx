@@ -38,7 +38,7 @@ function QuestPage({ data }: { data: StorageData }) {
         Array.isArray(data.topTemplateIds) &&
         data.topTemplateIds.includes(template.id) ? (
           <Badge.Ribbon text="置顶" color="purple" key={template.id}>
-            <TemplateCard key={template.id} template={template} />
+            <TemplateCard template={template} />
           </Badge.Ribbon>
         ) : (
           <TemplateCard key={template.id} template={template} />
@@ -59,7 +59,7 @@ function RewardPage({ data }: { data: StorageData }) {
         Array.isArray(data.topTemplateIds) &&
         data.topTemplateIds.includes(template.id) ? (
           <Badge.Ribbon text="目标" color="volcano" key={template.id}>
-            <TemplateCard key={template.id} template={template} />
+            <TemplateCard template={template} />
           </Badge.Ribbon>
         ) : (
           <TemplateCard key={template.id} template={template} />
