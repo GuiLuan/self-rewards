@@ -129,34 +129,45 @@ class TemplateOp {
 
   /**
    * 排序模板，points升序排序，再按照 usedCount / repeatCount 升序排序
+   *
+   * @param templates 模板列表
+   * @param topArrayIds 需要置顶的模板ID列表
    */
-  static sort(templates: BaseTemplate[], firstId?: string) {
-    return templates.slice().sort((a, b) => {
-      if (a.id === firstId) {
-        return -1;
-      } else if (b.id === firstId) {
-        return 1;
-      }
+  static sort(templates: BaseTemplate[], topArrayIds?: string[]) {
+    function sortFunc(a: BaseTemplate, b: BaseTemplate) {
       if (a.usedCount === a.repeatCount && b.usedCount !== b.repeatCount) {
-        return 1; // 将 a 放到后面
+        // 将“用完”的放在后面
+        return 1;
       } else if (
         a.usedCount !== a.repeatCount &&
         b.usedCount === b.repeatCount
       ) {
-        return -1; // 将 b 放到后面
+        // 将“没用完”的放在前面
+        return -1;
       } else if (
         a.usedCount === a.repeatCount &&
         b.usedCount === b.repeatCount
       ) {
-        return 0; // 如果两者的 usedCount 等于 repeatCount，保持原顺序不变
+        // 如果都“用完”了，保持原顺序不变
+        return 0;
       } else {
         if (a.points !== b.points) {
+          // 如果都没“用完”，先按照点数升序排序
           return a.points - b.points;
         } else {
+          // 点数相同的，再按照 usedCount / repeatCount 升序排序
           return a.usedCount / a.repeatCount - b.usedCount / b.repeatCount;
         }
       }
-    });
+    }
+    return topArrayIds === undefined
+      ? templates.sort(sortFunc)
+      : [
+          ...topArrayIds.map((e) => templates.find((t) => t.id === e)!),
+          ...templates
+            .filter((t) => !topArrayIds.includes(t.id))
+            .sort(sortFunc),
+        ];
   }
 }
 

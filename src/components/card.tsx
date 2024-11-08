@@ -102,6 +102,7 @@ function TemplateCard({ template }: { template: BaseTemplate }) {
                         notification.warning({
                           message: "删除成功",
                           description: `${template.type === "quest" ? "🏆 成就" : "🎁 奖励"} ${template.name}`,
+                          showProgress: true,
                         });
                       }}
                     >
@@ -109,7 +110,8 @@ function TemplateCard({ template }: { template: BaseTemplate }) {
                     </Popconfirm>
                   ),
                 },
-                template.type === "reward" && data.trackReward !== template.id
+                template.type === "reward" &&
+                !data.topTemplateIds?.includes(template.id)
                   ? {
                       key: "track",
                       icon: <FaRegStar />,
@@ -117,16 +119,20 @@ function TemplateCard({ template }: { template: BaseTemplate }) {
                       onClick: () => {
                         updateData({
                           ...data,
-                          trackReward: template.id,
+                          topTemplateIds: Array.isArray(data.topTemplateIds)
+                            ? [...data.topTemplateIds, template.id]
+                            : [template.id],
                         });
                         notification.success({
                           message: "设置目标",
                           description: `🎁 ${template.name} 被设为目标`,
+                          showProgress: true,
                         });
                       },
                     }
                   : null,
-                template.type === "reward" && data.trackReward === template.id
+                template.type === "reward" &&
+                data.topTemplateIds?.includes(template.id)
                   ? {
                       key: "untrack",
                       icon: <FaStar />,
@@ -134,11 +140,54 @@ function TemplateCard({ template }: { template: BaseTemplate }) {
                       onClick: () => {
                         updateData({
                           ...data,
-                          trackReward: undefined,
+                          topTemplateIds: data.topTemplateIds?.filter(
+                            (id) => id !== template.id,
+                          ),
                         });
                         notification.warning({
                           message: "取消目标",
                           description: `🎁 ${template.name} 不再是目标`,
+                          showProgress: true,
+                        });
+                      },
+                    }
+                  : null,
+                template.type === "quest" &&
+                !data.topTemplateIds?.includes(template.id)
+                  ? {
+                      key: "topQuest",
+                      icon: <FaRegStar />,
+                      label: "置顶",
+                      onClick: () => {
+                        updateData({
+                          ...data,
+                          topTemplateIds: Array.isArray(data.topTemplateIds)
+                            ? [...data.topTemplateIds, template.id]
+                            : [template.id],
+                        });
+                        notification.success({
+                          message: "置顶成功",
+                          description: `🏆 ${template.name} 被置顶`,
+                        });
+                      },
+                    }
+                  : null,
+                template.type === "quest" &&
+                data.topTemplateIds?.includes(template.id)
+                  ? {
+                      key: "untopQuest",
+                      icon: <FaStar />,
+                      label: "取消置顶",
+                      onClick: () => {
+                        updateData({
+                          ...data,
+                          topTemplateIds: data.topTemplateIds?.filter(
+                            (id) => id !== template.id,
+                          ),
+                        });
+                        notification.warning({
+                          message: "取消置顶",
+                          description: `🏆 ${template.name} 不再置顶`,
                         });
                       },
                     }
@@ -223,11 +272,23 @@ function TemplateCard({ template }: { template: BaseTemplate }) {
                 notification.success({
                   message: `🏆 达成：${template.name}`,
                   description: `获得 ${v.points} 点数`,
+                  showProgress: true,
                 });
-                if (data.trackReward !== undefined) {
-                  notification.info({
-                    message: `🎯 目标：${TemplateOp.query(data.templates, data.trackReward)!.name}`,
-                    description: `距离🎁 ${TemplateOp.query(data.templates, data.trackReward)!.name} 还有 ${TemplateOp.query(data.templates, data.trackReward)!.points - (data.points + v.points)} 点数`,
+                if (
+                  data.topTemplateIds !== undefined &&
+                  data.topTemplateIds.length !== 0
+                ) {
+                  data.topTemplateIds.map((t, i) => {
+                    let template = TemplateOp.query(data.templates, t);
+                    let points = v.points;
+                    setTimeout(() => {
+                      notification.info({
+                        message: `🎯 目标：${template!.name}`,
+                        description: `距离🎁 ${template!.name} 还有 ${template!.points - (data.points + points)} 点数`,
+                        placement: "top",
+                        showProgress: true,
+                      });
+                    }, 700 * i);
                   });
                 }
               }}
@@ -243,6 +304,7 @@ function TemplateCard({ template }: { template: BaseTemplate }) {
                       notification.error({
                         message: "点数不足",
                         description: `当前点数：${data.points}，所需点数：${template.points}`,
+                        showProgress: true,
                       });
                       return;
                     } else {
@@ -265,6 +327,7 @@ function TemplateCard({ template }: { template: BaseTemplate }) {
                     notification.success({
                       message: `🎁 兑换：${template.name}`,
                       description: `消耗 ${template.points} 点数`,
+                      showProgress: true,
                     });
                     return;
                   case "quest":
@@ -473,6 +536,7 @@ function TodayInstanceCard({ instance }: { instance: BaseInstance }) {
                   (instance.type === "quest" ? "🏆 取消：" : "🎁 退还：") +
                   instance.templateName,
                 description: `点数 ${instance.type === "quest" && instance.points !== undefined ? instance.points : instance.templatePoints} 已${instance.type === "quest" ? "扣除" : "返还"}`,
+                showProgress: true,
               });
             }}
           >

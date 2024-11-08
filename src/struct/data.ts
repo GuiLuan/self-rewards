@@ -5,7 +5,7 @@ interface StorageData {
   templates: (QuestTemplate | RewardTemplate)[];
   instances: (QuestInstance | RewardInstance)[];
   points: number;
-  trackReward?: string;
+  topTemplateIds?: string[];
 }
 
 const emptyData: StorageData = {
