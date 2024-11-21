@@ -31,8 +31,8 @@ import { InstanceModal, TemplateModal } from "./modal";
 import { QuestInstance, RewardInstance } from "../struct/instance";
 
 function TemplateCard({ template }: { template: BaseTemplate }) {
-  const [open, setOpen] = useState(false);
-  const [open1, setOpen1] = useState(false);
+  const [openAlterModal, setOpenAlterModal] = useState(false);
+  const [openCompleteModal, setOpenCompleteModal] = useState(false);
 
   const { data, updateData } = useContext(UpdateDataContext);
 
@@ -79,7 +79,7 @@ function TemplateCard({ template }: { template: BaseTemplate }) {
                   icon: <FaRegEdit />,
                   label: "编辑",
                   onClick: () => {
-                    setOpen(true);
+                    setOpenAlterModal(true);
                   },
                 },
 
@@ -208,8 +208,8 @@ function TemplateCard({ template }: { template: BaseTemplate }) {
           </Dropdown>
           <TemplateModal
             modalTitle="修改模板"
-            open={open}
-            setOpen={setOpen}
+            open={openAlterModal}
+            setOpen={setOpenAlterModal}
             onSubmit={(form) => {
               let topTemplateIds = data.topTemplateIds;
               if (form.onTop === true) {
@@ -227,7 +227,7 @@ function TemplateCard({ template }: { template: BaseTemplate }) {
                 } as BaseTemplate),
                 topTemplateIds: topTemplateIds,
               });
-              setOpen(false);
+              setOpenAlterModal(false);
               notification.success({
                 message: "修改成功",
                 description: `🎉 ${template.name} 修改成功`,
@@ -281,8 +281,8 @@ function TemplateCard({ template }: { template: BaseTemplate }) {
             }}
           >
             <InstanceModal
-              open={open1}
-              setOpen={setOpen1}
+              open={openCompleteModal}
+              setOpen={setOpenCompleteModal}
               maxPoints={template.points}
               onSubmit={(v) => {
                 updateData({
@@ -370,7 +370,7 @@ function TemplateCard({ template }: { template: BaseTemplate }) {
                     });
                     return;
                   case "quest":
-                    setOpen1(true);
+                    setOpenCompleteModal(true);
                     return;
                 }
               }}
