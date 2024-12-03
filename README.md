@@ -1,7 +1,7 @@
 # 🎈 简介
 
 <div style="display: flex; justify-content: center; margin-bottom: 1rem; ">
-  <img src="preview1.png" alt="任务视图" width="400" style="margin-right: 10px;">
+  <img src="preview1.png" alt="任务视图" width="400" >
   <img src="preview2.png" alt="奖励视图" width="400">
 </div>
 
